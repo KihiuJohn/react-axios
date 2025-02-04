@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import axios from "axios";
 
 const ContactUsForm = () => {
-  // Define your form state
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -17,16 +16,7 @@ const ContactUsForm = () => {
     message: "",
   });
 
-  // Map the selected country code to a proper CountryID (using ISO codes).
-  const countryMapping = {
-    "+1": "US",    // United States
-    "+44": "GB",   // United Kingdom
-    "+91": "IN",   // India
-    "+61": "AU",   // Australia
-    "+27": "ZA",   // South Africa
-  };
-
-  // Handle changes in form fields
+  // Update form fields when a change occurs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
@@ -35,9 +25,8 @@ const ContactUsForm = () => {
     }));
   };
 
-  // Function to authenticate and get the token (if needed)
+  // Function to obtain the auth token by logging in
   const getAuthToken = async () => {
-    // Use relative URL so that the proxy directs the request to http://localhost/MyStoreInstance
     const loginUrl = "/entity/auth/login";
     const credentials = {
       name: "admin",
@@ -53,9 +42,10 @@ const ContactUsForm = () => {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        withCredentials: true,
       });
-      // Adjust this if your Acumatica instance returns the token differently.
+
+      // Assuming the token is returned in the response data.
+      // (Depending on your Acumatica setup, you may need to adjust how you retrieve the token.)
       const token = response.data;
       localStorage.setItem("acumaticaAuthToken", token);
       return token;
@@ -68,14 +58,14 @@ const ContactUsForm = () => {
     }
   };
 
-  // Handle form submission using PUT
+  // Handle the form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Use a relative URL so that the proxy forwards the request correctly.
-    const apiUrl = "/entity/Default/24.200.001/Lead";
+    // Update the API URL to match the actual endpoint name
+    const apiUrl = "/entity/Leads/1/CustomLeads";
 
-    // Retrieve or obtain the auth token
+    // Retrieve the auth token if needed (or handle authentication via cookies on the server)
     let authToken = localStorage.getItem("acumaticaAuthToken");
     if (!authToken) {
       try {
@@ -86,43 +76,23 @@ const ContactUsForm = () => {
       }
     }
 
-    // Build the payload.
-    // Standard fields are mapped directly.
-    // Custom attributes are sent under Answers.Answer.
-    // The Address object is included with CountryID (from our mapping) and a placeholder AddressLine1.
+    // Prepare the payload for submission
     const payload = {
       FirstName: { value: formData.firstName },
       LastName: { value: formData.lastName },
-      EMail: { value: formData.workEmail },
-      Salutation: { value: formData.position },
-      Phone1: { value: `${formData.countryCode} ${formData.mobileNumber}` },
-      FullName: { value: formData.companyName },
-      Description: { value: formData.message },
-      DisplayName: { value: `${formData.firstName} ${formData.lastName}` },
-      Answers: {
-        Answer: [
-          {
-            AttributeID: { value: "USRCompanySize" },
-            Value: { value: formData.companySize },
-          },
-          {
-            AttributeID: { value: "USRIndustry" },
-            Value: { value: formData.industry },
-          },
-          {
-            AttributeID: { value: "USREnquiryAbout" },
-            Value: { value: formData.enquiryAbout },
-          },
-        ],
-      },
-      Address: {
-        CountryID: { value: countryMapping[formData.countryCode] || "" },
-        AddressLine1: { value: "Not Provided" }
-      },
+      WorkEmail: { value: formData.workEmail },
+      Position: { value: formData.position },
+      MobileNumber: { value: formData.mobileNumber },
+      CompanyName: { value: formData.companyName },
+      CompanySize: { value: formData.companySize },
+      Industry: { value: formData.industry },
+      EnquiryAbout: { value: formData.enquiryAbout },
+      CountryCode: { value: formData.countryCode },
+      Message: { value: formData.message },
     };
 
     try {
-      // Use PUT to create/update the Lead record.
+      // Use withCredentials to ensure cookies are sent automatically
       const response = await axios.put(apiUrl, payload, {
         withCredentials: true,
         headers: {
@@ -134,7 +104,7 @@ const ContactUsForm = () => {
       console.log("Data submitted successfully:", response.data);
       alert("Your enquiry has been submitted!");
 
-      // Clear the form after a successful submission
+      // Clear the form after submission
       setFormData({
         firstName: "",
         lastName: "",
@@ -153,7 +123,7 @@ const ContactUsForm = () => {
         "Error submitting data:",
         error.response ? error.response.data : error.message
       );
-      alert("Failed to submit data. Please review the errors and try again.");
+      alert("Failed to submit data. Please try again.");
     }
   };
 
@@ -196,7 +166,7 @@ const ContactUsForm = () => {
       </div>
 
       <div>
-        <label htmlFor="position">Position (Job Title):</label>
+        <label htmlFor="position">Position:</label>
         <input
           type="text"
           id="position"
@@ -232,7 +202,7 @@ const ContactUsForm = () => {
       </div>
 
       <div>
-        <label htmlFor="companySize">Number of Employees:</label>
+        <label htmlFor="companySize">Company Size:</label>
         <select
           id="companySize"
           name="companySize"
@@ -280,7 +250,7 @@ const ContactUsForm = () => {
           required
         >
           <option value="">Select</option>
-          <option value="Lead">Lead</option>
+          <option value="Acumatica">Acumatica</option>
           <option value="Payspace">Payspace</option>
           <option value="Sage Evolution">Sage Evolution</option>
           <option value="Our recommendation">Our recommendation</option>
